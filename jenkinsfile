@@ -1,0 +1,26 @@
+node('master')
+{
+    stage('continuousdownload')
+    {
+        git 'https://github.com/sharunvdev/maven.git'
+    }
+    stage('continuousbuild')
+    {
+       sh 'mvn package'
+    }
+    stage('continuousdeployment')
+    {
+        deploy adapters: [tomcat9(credentialsId: '6dc6ad70-d210-404b-8c40-30888548da63', path: '', url: 'http://172.31.1.183:8080')], contextPath: 'testapp', war: '**/*.war'
+    }
+    stage('continuoustesting')
+    {
+        git 'https://github.com/sharunvdev/Testing.git'
+        
+        sh 'java -jar /home/ubuntu/.jenkins/workspace/scriptedpipe/testing.jar'
+    }
+    stage('continuousdelivery')
+    {
+        input message: 'waiting for approval from DM', submitter: 'Deva'
+        deploy adapters: [tomcat9(credentialsId: '6dc6ad70-d210-404b-8c40-30888548da63', path: '', url: 'http://172.31.7.81:8080')], contextPath: 'prodapp', war: '**/*.war'
+    }
+}
